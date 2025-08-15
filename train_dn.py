@@ -14,7 +14,7 @@ from models import Generator_svhn, Discriminator, ResNet20
 from tensorboardX import SummaryWriter
 from data_loader import get_loader
 import torch.nn.functional as F
-from utils import compute_lambda_anneal, compute_gradient_penalty, _lr_factor,free_params, frozen_params,evaluate_losses
+from utils import compute_lambda_anneal, compute_gradient_penalty, _lr_factor,free_params, frozen_params, evaluate_losses
 
 import math
 import torch.optim as optim
