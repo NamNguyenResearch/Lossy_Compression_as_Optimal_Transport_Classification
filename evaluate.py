@@ -2,108 +2,87 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# def extract_last_epoch_results(base_dir):
-#     """
-#     Extracts the distortion loss and rate from the last epoch in each _perception_losses.csv file.
-#     """
-#     results = []
-#     for folder in os.listdir(base_dir):
-#         folder_path = os.path.join(base_dir, folder)
-#         if os.path.isdir(folder_path):
-#             csv_file = os.path.join(folder_path, "_perception_losses.csv")
-#             if os.path.exists(csv_file):
-#                 # Read the CSV file
-#                 df = pd.read_csv(csv_file)
-#                 # Get the last row (last epoch)
-#                 last_row = df.iloc[-1]
-#                 distortion_loss = last_row["distortion_loss"]
-#                 rate = last_row["rate"]
-#                 results.append((rate, distortion_loss))
-#     return results
-
-# def plot_distortion_loss_rate_curve(results, base_dir, output_filename="distortion_loss_rate_curve.png"):
-#     """
-#     Plots the distortion loss-rate curve and saves it to a file in the base_dir folder.
-#     """
-#     results = sorted(results, key=lambda x: x[0])  # Sort by rate
-#     rates, distortion_losses = zip(*results)
-    
-#     plt.figure(figsize=(8, 6))
-#     plt.plot(rates, distortion_losses, marker='o', label="Distortion Loss vs Rate")
-#     plt.xlabel("Rate")
-#     plt.ylabel("Distortion Loss")
-#     plt.title("Distortion Loss - Rate Curve")
-#     plt.legend()
-#     plt.grid(True)
-    
-#     # Save the figure in the base_dir folder
-#     output_path = os.path.join(base_dir, output_filename)
-#     plt.savefig(output_path)
-#     plt.savefig(output_path) 
-
-# if __name__ == "__main__":
-#     base_dir = "experiments/M7/"  # Path to the directory containing folders like 4-4, 6-4, etc.
-#     results = extract_last_epoch_results(base_dir)
-#     if results:
-#         plot_distortion_loss_rate_curve(results, base_dir)
-#     else:
-#         print("No valid _perception_losses.csv files found.")
-
-def extract_last_epoch_results(base_dir):
+# =============================================================================================
+def extract_last_epoch_results(base_dir, loss_file="_perception_losses.csv", accuracy_file="_accuracy.csv"):
     """
-    Extracts the distortion loss and rate from the last epoch in each _perception_losses.csv file.
+    Extracts the distortion loss, rate, and accuracy from the last epoch of the given CSV files.
     """
-    results = []
+    loss_results = []
+    accuracy_results = []
+
     for folder in os.listdir(base_dir):
         folder_path = os.path.join(base_dir, folder)
         if os.path.isdir(folder_path):
-            csv_file = os.path.join(folder_path, "_perception_losses.csv")
-            if os.path.exists(csv_file):
-                # Read the CSV file
-                df = pd.read_csv(csv_file)
-                # Get the last row (last epoch)
-                last_row = df.iloc[-1]
+            # Extract distortion loss and rate
+            loss_csv = os.path.join(folder_path, loss_file)
+            if os.path.exists(loss_csv):
+                df_loss = pd.read_csv(loss_csv)
+                last_row = df_loss.iloc[-1]
                 distortion_loss = last_row["distortion_loss"]
                 rate = last_row["rate"]
-                results.append((rate, distortion_loss))
-    return results
+                loss_results.append((rate, distortion_loss))
 
-def plot_distortion_loss_rate_curves(results_common_randomness, results_no_common_randomness, output_path="distortion_loss_rate_comparison.png"):
-    """
-    Plots two distortion loss-rate curves (for common randomness and no common randomness) and saves the figure to a file.
-    """
-    # Sort results by rate
-    results_common_randomness = sorted(results_common_randomness, key=lambda x: x[0])
-    results_no_common_randomness = sorted(results_no_common_randomness, key=lambda x: x[0])
+            # Extract accuracy and rate
+            acc_csv = os.path.join(folder_path, accuracy_file)
+            if os.path.exists(acc_csv):
+                df_acc = pd.read_csv(acc_csv)
+                last_row = df_acc.iloc[-1]
+                accuracy = last_row["accuracy"]
+                rate = last_row["rate"]
+                accuracy_results.append((rate, accuracy))
 
-    # Extract rates and distortion losses
-    rates_common_randomness, distortion_losses_common_randomness = zip(*results_common_randomness)
-    rates_no_common_randomness, distortion_losses_no_common_randomness = zip(*results_no_common_randomness)
-    
-    # Plot the curves
+    return loss_results, accuracy_results
+
+# =============================================================================================
+def plot_curves(loss_results_cr, loss_results_no_cr, accuracy_results_cr, accuracy_results_no_cr, output_path_prefix="comparison"):
+    """
+    Plots distortion loss-rate and accuracy-rate curves, saving both figures.
+    """
+    # Sort the results
+    loss_results_cr = sorted(loss_results_cr, key=lambda x: x[0])
+    loss_results_no_cr = sorted(loss_results_no_cr, key=lambda x: x[0])
+    accuracy_results_cr = sorted(accuracy_results_cr, key=lambda x: x[0])
+    accuracy_results_no_cr = sorted(accuracy_results_no_cr, key=lambda x: x[0])
+
+    # Distortion loss vs Rate
+    rates_cr, distortion_cr = zip(*loss_results_cr)
+    rates_no_cr, distortion_no_cr = zip(*loss_results_no_cr)
+
     plt.figure(figsize=(8, 6))
-    plt.plot(rates_common_randomness, distortion_losses_common_randomness, marker='o', label="Common Randomness")
-    plt.plot(rates_no_common_randomness, distortion_losses_no_common_randomness, marker='s', label="No Common Randomness")
+    plt.plot(rates_cr, distortion_cr, marker='o', label="Common Randomness")
+    # plt.plot(rates_no_cr, distortion_no_cr, marker='s', label="No Common Randomness")
     plt.xlabel("Rate")
     plt.ylabel("Distortion Loss")
-    plt.title("Distortion Loss - Rate Curve Comparison")
+    plt.title("Distortion Loss vs Rate")
     plt.legend()
     plt.grid(True)
-    
-    # Save the figure
-    plt.savefig(output_path)
-    print(f"Figure saved to {output_path}")
+    plt.savefig(f"{output_path_prefix}_distortion_loss_rate.png")
+    print(f"Distortion loss figure saved to {output_path_prefix}_distortion_loss_rate.png")
 
+    # Accuracy vs Rate
+    rates_cr, accuracy_cr = zip(*accuracy_results_cr)
+    rates_no_cr, accuracy_no_cr = zip(*accuracy_results_no_cr)
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(rates_cr, accuracy_cr, marker='o', label="Common Randomness")
+    # plt.plot(rates_no_cr, accuracy_no_cr, marker='s', label="No Common Randomness")
+    plt.xlabel("Rate")
+    plt.ylabel("Accuracy")
+    plt.title("Accuracy vs Rate")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(f"{output_path_prefix}_accuracy_rate.png")
+    print(f"Accuracy figure saved to {output_path_prefix}_accuracy_rate.png")
+
+# =============================================================================================
 if __name__ == "__main__":
-    base_dir_common_randomness = "experiments/M3"  # Path to the directory containing folders for common randomness
-    base_dir_no_common_randomness = "experiments/M4"  # Path to the directory containing folders for no common randomness
+    base_dir_cr = "experiments/S1"  # Common randomness
+    base_dir_no_cr = "experiments/S2"  # No common randomness
 
-    # Extract results for common randomness and no common randomness
-    results_common_randomness = extract_last_epoch_results(base_dir_common_randomness)
-    results_no_common_randomness = extract_last_epoch_results(base_dir_no_common_randomness)
+    loss_cr, acc_cr = extract_last_epoch_results(base_dir_cr)
+    loss_no_cr, acc_no_cr = extract_last_epoch_results(base_dir_no_cr)
 
-    if results_common_randomness and results_no_common_randomness:
-        # Plot and save the comparison figure
-        plot_distortion_loss_rate_curves(results_common_randomness, results_no_common_randomness, output_path="distortion_loss_rate_comparison.png")
+    if loss_cr and loss_no_cr and acc_cr and acc_no_cr:
+        plot_curves(loss_cr, loss_no_cr, acc_cr, acc_no_cr)
     else:
-        print("No valid _perception_losses.csv files found in one or both directories.")
+        print("Missing data in one or more directories.")

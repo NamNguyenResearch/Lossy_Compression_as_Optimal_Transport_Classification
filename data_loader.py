@@ -33,4 +33,26 @@ def get_loader(config):
                                               batch_size=config.batch_size,
                                               shuffle=False)
 
-    return train_loader, test_loader
+    return train_loader, test_loader, UnNormalize(0, -1, identity=True)
+
+class UnNormalize(object):
+    def __init__(self, mean, std, identity=False):
+        self.mean = mean
+        self.std = std
+        self.identity = identity
+
+    def __call__(self, tensor):
+        """
+        Args:
+            tensor (Tensor): Tensor image of size (C, H, W) to be normalized.
+        Returns:
+            Tensor: Normalized image.
+        """
+        if self.identity:
+            # Do nothing
+            return tensor
+
+        for t, m, s in zip(tensor, self.mean, self.std):
+            # The normalize code -> t.sub_(m).div_(s)
+            t.mul_(s).add_(m)
+        return tensor

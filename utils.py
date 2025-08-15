@@ -14,14 +14,20 @@ import torch
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 
-def evaluate_losses(real_imgs, recon_imgs, discriminator):
+def evaluate_losses(real_imgs, recon_imgs, label_imgs, discriminator, model_classifier):
+    # Ensure label_imgs is on the same device as classifier_output
+    # label_imgs = label_imgs.to(recon_imgs.device)
+    
     real_validity = discriminator(real_imgs)
     fake_validity = discriminator(recon_imgs)
 
     perception_loss = torch.mean(real_validity) - torch.mean(fake_validity)
     distortion_loss = F.mse_loss(real_imgs, recon_imgs)
 
-    return distortion_loss, perception_loss
+    classifier_output = model_classifier(recon_imgs)
+    cross_entropy_loss = F.cross_entropy(classifier_output, label_imgs)
+
+    return distortion_loss, perception_loss, cross_entropy_loss
 
 def free_params(module: nn.Module):
     for p in module.parameters():

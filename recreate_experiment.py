@@ -5,6 +5,7 @@ import time
 import json
 import shutil
 
+
 def run(experiment_path_pre, settings, commands):
     with open(f"{experiment_path_pre}/_status.tmp", "w") as f:
         now = datetime.datetime.now()
@@ -40,23 +41,17 @@ def train_with_params(mode, settings, experiment_number, selection_method=None, 
     for setting in settings:
         experiment_path_super_res = f"{setting['latent_dim']}-{setting['L']}"
 
-        # latent_dim_super_res_dir = "latent_dim={:.5f}".format(setting["latent_dim"])
-
-        # if mode == "super_res":
-        #     experiment_path = os.path.join(experiment_path_pre, experiment_path_super_res, latent_dim_super_res_dir)
-
-        if mode == "super_res":
-            experiment_path = os.path.join(experiment_path_pre, experiment_path_super_res)
+        experiment_path = os.path.join(experiment_path_pre, experiment_path_super_res)
         
         if not overwrite and os.path.exists(experiment_path):
             raise ValueError("Overwritting!")
 
-        commands.append(
-            "python train_super_res.py "
-            + " ".join(f"--{key} {value}" for key, value in setting.items())
-            + f" --experiment_path {experiment_path}"
-            + f" --mode {mode}"
-        )
+        if mode == "super_res":
+            commands.append(
+                "python train_super_res.py " + " ".join(f"--{key} {value}" for key, value in setting.items()) + f" --experiment_path {experiment_path}" + f" --mode {mode}")
+        else:
+            commands.append(
+                "python train_dn.py " + " ".join(f"--{key} {value}" for key, value in setting.items()) + f" --experiment_path {experiment_path}" + f" --mode {mode}")
 
     for command in commands:
         print(command)
@@ -95,22 +90,42 @@ def train_with_params(mode, settings, experiment_number, selection_method=None, 
     print(f"Finished running experiment {experiment_number}")
 
 
-# ====================================
+# ========================================================================
 # Super-resolution + MNIST
-
 # ---------------------------------------
 # With common randomess models. Change latent_dim, L = (,) accordingly to get tradeoffs at various rates.
 settings = []
-experiment_number = ("M6")  # This is the folder which will be created to contain the results
+experiment_number = ("S3")  # This is the folder which will be created to contain the results
 
 mode = "super_res"  # Indicated super-resolution mode
 L = 4  # Quantization levels. Controls the rate (R = latent_dim_1*log2(L_1))
 
 # latent_dim_base = [2, 4, 6, 8, 10, 12, 14, 16] # Latent dimensions
 
-latent_dim_base = [10] # Latent dimensions
-
+latent_dim_base = [16] # Latent dimensions
+ 
 for latent_dim in latent_dim_base:
-    settings.append({"L": L, "latent_dim": latent_dim, "epochs": 50, "batch-size": 64, "common": True})
+    settings.append({"L": L, "latent_dim": latent_dim, "epochs": 100, "batch-size": 64, "common": True})
 
 train_with_params(mode, settings, experiment_number, overwrite=False)
+
+
+
+# # ========================================================================
+# # Denoising + SVHN
+# # ---------------------------------------
+# # With common randomess models. Change latent_dim, L = (,) accordingly to get tradeoffs at various rates.
+# settings = []
+# experiment_number = ("D3")  # This is the folder which will be created to contain the results
+
+# mode = "dn"  # Indicated denosing mode
+# L = 4  # Quantization levels. Controls the rate (R = latent_dim_1*log2(L_1))
+
+# # latent_dim_base = [2, 4, 6, 8, 10, 12, 14, 16] # Latent dimensions
+
+# latent_dim_base = [6] # Latent dimensions
+
+# for latent_dim in latent_dim_base:
+#     settings.append({"L": L, "latent_dim": latent_dim, "epochs": 100, "batch-size": 64, "common": False})
+
+# train_with_params(mode, settings, experiment_number, overwrite=False)
