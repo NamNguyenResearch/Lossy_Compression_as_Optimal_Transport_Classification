@@ -1,0 +1,4 @@
+Experiment: 08/09/2025 17:27:28
+exp,L,latent_dim,epochs,batch-size,common,timing
+0,4,60,100,64,True,1.5379849999999988e-05
+Total time taken (minutes): 1.5379849999999988e-05
